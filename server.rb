@@ -24,7 +24,7 @@ class ChatServer
               # Returns true if ios is at end of file that means there are no more data to read. 
               # The stream must be opened for reading or an IOError will be raised
               #  in other words, you check whether the client has disconnected. 
-              str = "Client left #{newSocket.peeraddr[2]}:#{newSocket.peeraddr[1]}\n"
+              str = "Client left #{socket.peeraddr[2]}:#{socket.peeraddr[1]}\n"
               broadcast_string(str, socket)
               socket.close
               @activeSockets.delete(socket)
