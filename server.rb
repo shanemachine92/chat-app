@@ -5,10 +5,10 @@ class ChatServer
     @activeSockets = []
     @server = TCPServer.new("", port)
     # usng "" lets you accept connections from any of the available interfaces on the host
-available interfaces on the host
+    # available interfaces on the host
     @server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
     # To reuse the address (for rapid restarts of the server), 
-    #you enable the SO_REUSEADDR socket option.
+    # you enable the SO_REUSEADDR socket option.
     puts "Chat server started on port: #{port}"
     @activeSockets.push(@server)
   end
