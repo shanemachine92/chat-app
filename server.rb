@@ -1,10 +1,11 @@
 require 'socket'
 
 class ChatServer
-
   def initialize(port)
     @activeSockets = []
     @server = TCPServer.new("", port)
+    # usng "" lets you accept connections from any of the available interfaces on the host
+available interfaces on the host
     @server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
     # To reuse the address (for rapid restarts of the server), 
     #you enable the SO_REUSEADDR socket option.
@@ -52,14 +53,10 @@ class ChatServer
   def accept_new_connection
     newSocket = @server.accept
     @activeSockets.push(newSocket)
-
     newSocket.write("You're connective to Shane's Chat App Server\n")
-
     str = "Client joined #{newSocket.peeraddr[2]}:#{newSocket.peeraddr[1]}\n"
-
     broadcast_string(str, newSocket)
   end
 end
 
 myChat = ChatServer.new(3333).run
-
