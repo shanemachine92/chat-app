@@ -14,7 +14,7 @@ class ChatServer
   end
 
   def run
-    while 1
+    loop do
       result = select(@activeSockets, nil, nil, nil)
       #read, write, exception, timeouts
       if result !=nil
