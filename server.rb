@@ -15,9 +15,10 @@ class ChatServer
 
   def run
     while 1
-      res = select(@activeSockets, nil, nil, nil)
-      if res !=nil
-        for socket in res[0]
+      result = select(@activeSockets, nil, nil, nil)
+      #read, write, exception, timeouts
+      if result !=nil
+        for socket in result[0]
           if socket == @server
             accept_new_connection
           else
@@ -41,9 +42,9 @@ class ChatServer
 
   private
 
-  def broadcast_string(str, omit_socket)
+  def broadcast_string(str, current_socket)
     @activeSockets.each do |clientSocket|
-      if clientSocket != @server && clientSocket != omit_socket
+      if clientSocket != @server && clientSocket != current_socket
         clientSocket.write(str)
       end
     end
