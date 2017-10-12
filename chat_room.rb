@@ -1,5 +1,6 @@
 class ChatRoom
-attr_accessor :name, :members
+  attr_accessor :name, :members
+
   def initialize(name)
     @name = name
     @members = []
