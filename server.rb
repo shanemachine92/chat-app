@@ -1,8 +1,12 @@
 require 'socket'
+require 'pry'
+require_relative './chat_room'
+require_relative './client'
 
 class ChatServer
   def initialize(port)
-    @activeSockets = []
+    @active_sockets = []
+    @chat_rooms = []
     @server = TCPServer.new("", port)
     # usng "" lets you accept connections from any of the available interfaces on the host
     # available interfaces on the host
@@ -10,7 +14,7 @@ class ChatServer
     # To reuse the address (for rapid restarts of the server), 
     # you enable the SO_REUSEADDR socket option.
     puts "Chat server started on port: #{port}"
-    @activeSockets.push(@server)
+    @active_sockets << @server
   end
 
   def run
@@ -18,22 +22,20 @@ class ChatServer
       result = select(@activeSockets, nil, nil, nil)
       #read, write, exception, timeouts
       if result !=nil
-        for socket in result[0]
+        result[0].each do |socket|
           if socket == @server
             accept_new_connection
-          else
-            if socket.eof?
+          elsif socket.eof?
               # Returns true if ios is at end of file that means there are no more data to read. 
               # The stream must be opened for reading or an IOError will be raised
               #  in other words, you check whether the client has disconnected. 
-              str = "Client left #{socket.peeraddr[2]}:#{socket.peeraddr[1]}\n"
+              str = "#{socket.username} left\n"
               broadcast_string(str, socket)
               socket.close
-              @activeSockets.delete(socket)
-            else
-              str = "[#{socket.peeraddr[2]}|#{socket.peeraddr[1]}]: #{socket.gets()}"
-              broadcast_string(str, socket)
-            end
+              @active_sockets.delete(socket)
+          else
+            str = "#{socket.username}: #{socket.gets()}"
+            broadcast_string(str, socket)
           end
         end
       end
@@ -43,21 +45,50 @@ class ChatServer
   private
 
   def broadcast_string(str, current_socket)
-    @activeSockets.each do |clientSocket|
-      if clientSocket != @server && clientSocket != current_socket
-        clientSocket.write(str)
+    @active_sockets.each do |client_socket|
+      if client_socket != @server && client_socket != current_socket && client_socket.current_room == current_socket.current_room
+        client_socket.write(str)
       end
     end
-    print(str)
+    puts str
   end
 
   def accept_new_connection
-    newSocket = @server.accept
-    @activeSockets.push(newSocket)
-    newSocket.write("You're connective to Shane's Chat App Server\n")
-    str = "Client joined #{newSocket.peeraddr[2]}:#{newSocket.peeraddr[1]}\n"
-    broadcast_string(str, newSocket)
+    @new_socket = @server.accept.extend Client
+    @active_sockets << @new_socket
+    @new_socket.write "You're connected to Shane's Chat App Server\n"
+    @new_socket.write "Please enter a username\n"
+    @new_socket.username = @new_socket.gets.chomp
+    @new_socket.write "Hello, #{@new_socket.username}. Welcome!\n"
+    @new_socket.write "Would you like to [1] create a new chat room or [2] join an existing one?\n"
+    str = @new_socket.gets.chomp.to_s.downcase
+
+    if str == '1'
+      @new_socket.write "Great, what would you like to name your new chat room?\n"
+      @new_chat_room = ChatRoom.new(@new_socket.gets.chomp)
+      @new_socket.current_room = @new_chat_room.name
+      create_new_chatroom
+      @chat_members = @new_chat_room.members << @new_socket
+      @new_socket.write "Chat room #{@new_chat_room.name} has been created. You are now in this room.\n"
+
+    elsif str == '2'
+      @new_socket.write "Here is the list of rooms: #{@list_chat_rooms}"
+      @new_socket.write "which would you like to enter?\n"
+      @new_socket.current_room = @new_socket.gets.chomp.downcase
+      @new_socket.write "Great, we're connecting you to the #{@new_socket.current_room} chat room\n"
+      @new_socket.write "You are now in the #{@room_choice} chat room\n"
+    else
+      @new_socket.write "Invalid choice. Please enter '1' to create a new room or '2' to join an existing room'\n"
+    end
+    str = "#{@new_socket.username} joined room #{@new_socket.current_room}\n"
+    broadcast_string(str, @new_socket)
+  end
+
+  def create_new_chatroom
+    @chat_rooms << @new_chat_room.name
+  end
+
+  def list_chat_rooms
+    @chat_rooms.each { |room| puts "#{room}"}
   end
 end
-
-myChat = ChatServer.new(3333).run
