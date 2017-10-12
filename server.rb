@@ -57,26 +57,31 @@ class ChatServer
     @new_socket = @server.accept.extend Client
     @active_sockets << @new_socket
     @new_socket.write "You're connected to Shane's Chat App Server\n"
+    get_user_details
+    chat_options
+  end
+
+  def get_user_details
     @new_socket.write "Please enter a username\n"
     @new_socket.username = @new_socket.gets.chomp
     @new_socket.write "Welcome, #{@new_socket.username}!\n"
-    chat_options
   end
 
   def chat_options
     @new_socket.write "Would you like to [1] create a new chat room or [2] join an existing one?\n"
     str = @new_socket.gets.chomp.to_s.downcase
 
-    if str == '1'
+    case str
+    when '1'
       create_new_chatroom
       announce_new_user
-    elsif str == '2'
+    when '2'
       join_existing_chatroom
       announce_new_user
-    elsif str == 'options'
+    when 'options'
       chat_options
     else
-      @new_socket.write "Invalid choice. Please enter '1' to create a new room or '2' to join an existing room'\n"
+      @new_socket.write "Invalid choice.\n"
       chat_options
     end
   end
@@ -86,17 +91,18 @@ class ChatServer
     @new_chat_room = ChatRoom.new(@new_socket.gets.chomp)
     @new_socket.current_room = @new_chat_room.name
     @chat_rooms << @new_chat_room.name
-    @chat_members = @new_chat_room.members << @new_socket.username
     @new_socket.write "Chat room #{@new_chat_room.name} has been created. You are now in this room.\n"
+    list_chat_members
   end
 
   def join_existing_chatroom
     if @chat_rooms.length != 0
-      @new_socket.write "Here is the list of rooms: #{list_chat_rooms()}\n Which would you like to enter?\n"
+      @new_socket.write "Here is the list of rooms:\n #{@chat_rooms}\n"
+      @new_socket.write "Which would you like to enter?\n"
       @new_socket.current_room = @new_socket.gets.chomp.downcase
       if @chat_rooms.include? @new_socket.current_room
-        @new_socket.write "Great, we're connecting you to the #{@new_socket.current_room} chat room\n"
         @new_socket.write "You are now in the #{@new_socket.current_room} chat room.\n"
+        list_chat_members
       else
         @new_socket.write "That room doesn't exist.\n"
         chat_options
@@ -112,11 +118,8 @@ class ChatServer
     broadcast_string(str, @new_socket)
   end
 
-  def list_chat_rooms
-    @chat_rooms.each { |room| puts room }
-  end
-
   def list_chat_members
-    @chat_members.each {|member| puts member}
+    @chat_members = @new_chat_room.members << @new_socket.username
+    @new_socket.write "Current members: #{@chat_members.each { |member| puts member }}\n"
   end
 end
