@@ -19,7 +19,7 @@ class ChatServer
 
   def run
     loop do
-      result = select(@activeSockets, nil, nil, nil)
+      result = select(@active_sockets, nil, nil, nil)
       #read, write, exception, timeouts
       if result !=nil
         result[0].each do |socket|
