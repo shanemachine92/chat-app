@@ -4,6 +4,8 @@ require_relative './chat_room'
 require_relative './client'
 
 class ChatServer
+  attr_accessor :port, :active_sockets, :chat_rooms, :server
+
   def initialize(port)
     @active_sockets = []
     @chat_rooms = []
@@ -40,25 +42,6 @@ class ChatServer
         end
       end
     end
-  end
-
-  private
-
-  def broadcast_string(str, current_socket)
-    @active_sockets.each do |client_socket|
-      if client_socket != @server && client_socket != current_socket && client_socket.current_room == current_socket.current_room
-        client_socket.write(str)
-      end
-    end
-    puts str
-  end
-
-  def accept_new_connection
-    @new_socket = @server.accept.extend Client
-    @active_sockets << @new_socket
-    @new_socket.write "You're connected to Shane's Chat App Server\n"
-    get_user_details
-    chat_options
   end
 
   def get_user_details
@@ -121,5 +104,24 @@ class ChatServer
   def list_chat_members
     @chat_members = @new_chat_room.members << @new_socket.username
     @new_socket.write "Current members: #{@chat_members.each { |member| puts member }}\n"
+  end
+
+  private
+
+  def broadcast_string(str, current_socket)
+    @active_sockets.each do |client_socket|
+      if client_socket != @server && client_socket != current_socket && client_socket.current_room == current_socket.current_room
+        client_socket.write(str)
+      end
+    end
+    puts str
+  end
+
+  def accept_new_connection
+    @new_socket = @server.accept.extend Client
+    @active_sockets << @new_socket
+    @new_socket.write "You're connected to Shane's Chat App Server\n"
+    get_user_details
+    chat_options
   end
 end
