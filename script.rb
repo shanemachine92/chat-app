@@ -1,3 +1,5 @@
 require_relative './chat_server'
+require 'redis'
 
-myChat = ChatServer.new(3333).run
+connection = Redis.new
+chat = ChatServer.new(3333, connection).run

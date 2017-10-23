@@ -3,8 +3,19 @@ require_relative '../chat_server'
 RSpec.describe ChatServer do
   before(:all) do
     @server = ChatServer.new(3333)
-    @new_socket = TCPSocket.new
+    @new_socket = TCPSocket.new("", 3333)
   end
+
+  let(:chat_room) do
+    instance_double(
+      'ChatRoom',
+      name: name,
+      members: members
+    )
+  end
+
+  let(:name) { 'TestRoom' }
+  let(:members) { ['TestMembers1', 'TestMember2'] }
 
   describe '#initialize' do
     it 'has no chatroooms' do
@@ -16,92 +27,77 @@ RSpec.describe ChatServer do
     end
   end
 
-  describe 'accept new connection' do
-    it 'accepts new connection' do
-      
+  describe '#accept_new_connection' do
+    before { allow_any_instance_of(ChatServer).to receive(:accept_new_connection) }
+    it 'accepts new connections' do
+      @server.accept_new_connection
+      expect(@server).to have_received(:accept_new_connection)
     end
-
   end
 
   describe 'get_user_details' do
-    it 'prompts new user for their username' do
-    end
-
-    it 'welcomes them' do
+    before { allow_any_instance_of(ChatServer).to receive(:get_user_details) }
+    it 'gets username from the socket' do
+      @server.get_user_details
+      expect(@server).to have_received(:get_user_details)
     end
   end
 
   describe 'chat_options' do
-    context 'when user chooses to create a new room' do
-      it 'calls #create_new_chatroom' do
-      end
-    end
+    before { allow_any_instance_of(ChatServer).to receive(:chat_options) }
+    it 'gives user option to join or create a room' do
+      @server.chat_options
+      expect(@server).to have_received(:chat_options)
 
-    context 'when user chooses to join existing room' do
-      it 'calls #join_existing_chatroom' do
-      end
-    end
-
-    context 'when user chooses options option' do
-      it 'calls itself' do
-      end
-    end
-
-    context 'when user makes an invalid selection' do
-      it 'alerts user that their choice is invalid' do
-      end
-
-      it 'calls itself' do
-      end
     end
   end
 
   describe '#create_new_chatroom' do
-    it 'prompts user to name new room' do
+    before { allow_any_instance_of(ChatServer).to receive(:create_new_chatroom) }
+    it 'creates a new chatroom' do
+      @server.create_new_chatroom
+      expect(@server).to have_received(:create_new_chatroom)
+      expect(@server.chat_rooms.length).to eq(1)
     end
 
-    it 'sets room name' do
-    end
-
-    it 'adds chat room to the chat rooms array' do
-    end
-
-    it 'alerts user that the room has been created' do
-    end
-
-    it 'lists the current people in the chat room' do
+    it 'calls list chat members' do
+      @server.stub(:list_chat_members)
+      @server.create_new_chatroom
+      expect(@server).to have_received(:list_chat_members)
     end
   end
 
   describe '#join_existing_chatroom' do
-    context 'when there are active rooms' do
-      it 'lists them' do
-      end
-    end
-
-    context 'when there are no active rooms' do
-      it 'directs user to create a new room' do
-      end
+    before { allow_any_instance_of(ChatServer).to receive(:join_existing_chatroom) }
+    it 'asks user which room they want to join' do
+      @server.join_existing_chatroom
+      expect(@server).to have_received(:join_existing_chatroom)
     end
   end
 
   describe '#announce_new_user' do
-    context 'users are in the chat room where a new person has joined' do
-      it 'writes to user that a new user has joined' do
-      end
-    end
-
-    context 'users are not in a chat where a new person has joined' do
-      it 'does not write to user that a new user has joined' do
-      end
+    before { allow_any_instance_of(ChatServer).to receive(:announce_new_user) }
+    it 'announces when new user joins the chat server' do
+      @server.announce_new_user
+      expect(@server).to have_received(:announce_new_user)
     end
   end
 
   describe 'list_chat_members' do
-    it 'adds name of new user to current chat room members list' do
+    before { allow_any_instance_of(ChatServer).to receive(:list_chat_members) }
+    it 'lists current members in the chat room' do
+      @server.list_chat_members
+      expect(@server).to have_received(:list_chat_members)
     end
+  end
 
-    it 'lists all chat room members' do
+  describe 'broadcast_string' do
+    let(:str) {'Everything is awesome' }
+    let(:current_socket) { @new_socket }
+    before { allow_any_instance_of(ChatServer).to receive(:broadcast_string) }
+    it 'writes message to other users' do
+      @server.broadcast_string(str, current_socket)
+      expect(@server).to have_received(:broadcast_string)
     end
   end
 end
